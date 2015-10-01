@@ -63,8 +63,9 @@ class rongdede_translate{
 
 			 // comment_moderation_text - future filter TODO
 			// full post wrapping (should happen late)
-			add_filter('the_content', array($this, 'post_content_wrap'), 9999);
-			add_filter('the_title', array($this, 'post_wrap'), 9999, 2);
+			add_filter('the_content', array($this, 'post_content_wrap'),1,1);
+			add_filter('the_excerpt', array(&$this, 'post_content_wrap'),1,1);
+			add_filter('the_title', array($this, 'post_wrap'), 1, 2);
 			
 
 			//按语言替换连接
@@ -163,7 +164,8 @@ class rongdede_translate{
 		content text
 	)";
 		//如果数据表不存在就创建数据表
-		if($wpdb->query($activesql) == 0){
+		//$this->rlog("222".$wpdb->query($activesql)."111");
+		if(!$wpdb->get_var($activesql)){
 		
 			$wpdb->query($createsql);
 		}
