@@ -17,31 +17,58 @@ define('RTTABLE', $wpdb->prefix.'rongdede_translate');
 class rongdede_const{
 	public static $languages = array(
 			'en' => 'English',
-			'jp' => '日本語',
-			'spa' => 'Español',
+			'ja' => '日本語',
+			'es' => 'Español',
 			'th' => 'ภาษาไทย',
 			'ru' => 'Русский',
 			'de' => 'Deutsch',
 			'nl' => 'Nederlands',
-			'kor' => '한국어',
-			'fra' => 'Français',
-			'ara' => 'العربية',
+			'ko' => '한국어',
+			'fr' => 'Français',
+			'ar' => 'العربية',
 			'pt' => 'Português',
 			'it' => 'Italiano',
 			'el' => 'Ελληνικά'
 		);
+	public static $baidulanguages = array(
+			'en' => 'en',
+			'ja' => 'jp',
+			'es' => 'spa',
+			'th' => 'th',
+			'ru' => 'ru',
+			'de' => 'de',
+			'nl' => 'nl',
+			'ko' => 'kor',
+			'fr' => 'fra',
+			'ar' => 'ara',
+			'pt' => 'pt',
+			'it' => 'it',
+			'el' => 'el'
+		);
 
-
-
+	public static function curPageURL()
+	{
+		$pageURL = 'http';
+		$pageURL .= "://";
+		$this_page = $_SERVER["REQUEST_URI"];   
+		// 只取 ? 前面的内容
+		//if (strpos($this_page, "?") !== false)
+			//$this_page = reset(explode("?", $this_page));
+	 
+		if ($_SERVER["SERVER_PORT"] != "80")
+		{
+			$pageURL .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . $this_page;
+		}
+		else
+		{
+			$pageURL .= $_SERVER["SERVER_NAME"] . $this_page;
+		}
+		return $pageURL;
+	}
 }
 class rongdede_translate{
 	//翻译的内容
 	var $translatecontent;
-	//目标语言
-	var $dst;
-	//百度支持的语言
-	var $baidudst = Array("jp","spa","th","ru","de","nl","en","kor","fra","ara","pt","it","el");
-	//var $baidudst = Array("en","jp","spa");
 	//源语言
 	var $src;
 	//错误信息
@@ -81,7 +108,7 @@ class rongdede_translate{
 				add_filter('day_link', array($this, 'rongdede_link'));
 				add_filter('feed_link', array($this, 'rongdede_link'));
 				add_filter('month_link', array($this, 'rongdede_link'));
-				add_filter('the_permalink', array($this, 'rongdede_link'));
+				//add_filter('the_permalink', array($this, 'rongdede_link'));
 				add_filter('year_link', array($this, 'rongdede_link'));
 				add_filter('tag_link', array($this, 'rongdede_link'));
 				add_filter('term_link', array($this, 'rongdede_link'));
@@ -115,26 +142,19 @@ class rongdede_translate{
 	
 	function rongdede_link($link){
 		global $wp_query;
-//		$this->rlog($link);
 		if(isset($wp_query->query_vars[LANG_PARAM]))
 		{
-//			$urlarr=parse_url($link);
-//			if(get_option('permalink_structure'))
-//			{
-//				$ul=$urlarr["scheme"]."://".$urlarr["host"]."/".$wp_query->query_vars[LANG_PARAM]."".$urlarr["path"];
-//				//$ul=home_url("/".$wp_query->query_vars[LANG_PARAM]);
-//			}
-//			else
-//			{
+
 				$ul=$link."&".LANG_PARAM."=".$wp_query->query_vars[LANG_PARAM];
+				
 				return $ul;
 				
 			}
-			
+			else
+		{
 			return $link;
-//		}
-//		$this->rlog($ul);
-//		return $link;
+		}
+
 	}
 	
 	//根据连接中是否带有语言来重写网站地址，使之带上语言的符号
@@ -179,7 +199,6 @@ class rongdede_translate{
 
 	public function rongdedetranslate($postid,$post){
 		global $wpdb;
-		$dst = $this->dst;
 
 		//对提交的内容进行处理
 		$posttitle = $post->post_title;
@@ -196,16 +215,16 @@ class rongdede_translate{
 		//按行生成一个数组
 		$postcontentarr = preg_split("/\n/",$postcontent);
 
-		//for($n=0;$n<count($this->baidudst);$n++)
 		foreach(rongdede_const::$languages as $langkey => $langdes)
 		{
 
 			$transcontent = "";
 			$transtitle = "";
-			$dstlang = $langkey;
+			
 			//判断使用的翻译引擎,返回标题和每一行翻译的数组
 			if($this->translateengine == "baidu")
 			{
+				$dstlang = rongdede_const::$baidulanguages[$langkey];
 				$transtitle = $this->baidu_translate($this->src,$dstlang,$post->post_title);
 				$transcontentarr = preg_split("/\n/",$this->baidu_translate($this->src,$dstlang,$postcontent));
 			}
@@ -231,7 +250,7 @@ class rongdede_translate{
 			$ivalue = array(
 				"postid" => $post->ID,
 				"posttitle" => $transtitle,
-				"lang" => $dstlang,
+				"lang" => $langkey,
 				"content" => $transcontent
 			);
 			$iformat = array('%d','%s','%s','%s');
@@ -244,7 +263,7 @@ class rongdede_translate{
 			$uformat = array('%s','%s');
 
 			//判断该post的翻译是否已经存在
-			$row_count = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rongdede_translate where lang='".$dstlang."' and postid=".$post->ID);
+			$row_count = $wpdb->get_row("SELECT * FROM ".$wpdb->prefix."rongdede_translate where lang='".$langkey."' and postid=".$post->ID);
 			
 			//如果数据已经存在则update，如果不存在则insert
 			if(!$row_count)
@@ -253,7 +272,7 @@ class rongdede_translate{
 			}
 			else
 			{
-				$wpdb->update($wpdb->prefix."rongdede_translate",$uvalue,array('postid'=>$post->ID,'lang'=>$dstlang),$uformat,array('%d','%s'));
+				$wpdb->update($wpdb->prefix."rongdede_translate",$uvalue,array('postid'=>$post->ID,'lang'=>$langkey),$uformat,array('%d','%s'));
 			}
 		}
 			
@@ -323,7 +342,7 @@ class rongdede_translate{
 	function update_rewrite_rules($rules) {
 
         $newRules = array();
-        $lang_prefix = "([a-z]{2,3}(\-[a-z]{2,3})?)/";
+        $lang_prefix = "([a-z]{2,2}(\-[a-z]{2,2})?)/";
 
         $lang_parameter = '&'.LANG_PARAM.'=$matches[1]';
 
@@ -373,7 +392,7 @@ class rongdede_translate{
 		}
 		else
 		{
-			$lang = "zh";
+			$lang = $this->src;
 		}
 		$row = $wpdb->get_row("select content from ".RTTABLE." where postid=".$GLOBALS['id']." and lang='".$lang."'");
 		if(!$row){
@@ -398,7 +417,7 @@ class rongdede_translate{
 		}
 		else
 		{
-			$lang = "zh";
+			$lang = $this->src;
 		}
 		$id = (is_object($id)) ? $id->ID : $id;
         if (!$id){
@@ -424,4 +443,6 @@ class rongdede_translate{
 $my_rongdede_translate = new rongdede_translate;
 
 require_once("widget.php");
+require_once("template.php");
+
 
