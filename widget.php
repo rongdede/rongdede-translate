@@ -3,13 +3,13 @@ class RongdedeTransWidget extends WP_Widget {
 
 	function __construct() {
 		// Instantiate the parent object
-		parent::__construct( false, 'LanguageTranslate' );
+		parent::__construct( false, 'RongdedeTranslate' );
 	}
 
 	function widget( $args, $instance ) {
 		// Widget output
 		echo '<aside id="recent-posts-2" class="widget widget_recent_entries">';
-		echo '<h2 class="widget-title">LangTranslate</h2>';
+		echo '<h2 class="widget-title">多国语言翻译</h2>';
 		echo '<ul>';
 		foreach(rongdede_const::$languages as $key => $value){
 			echo "<li><a href='".$this->get_transurl($key)."'>".$value."</a></li>";
@@ -54,6 +54,6 @@ function myplugin_register_widgets() {
 	register_widget( 'RongdedeTransWidget' );
 }
 
+//add_action( 'widgets_init', 'myplugin_register_widgets' );
 add_action( 'widgets_init', 'myplugin_register_widgets' );
-
 ?>

@@ -77,23 +77,26 @@ class rongdede_translate{
 	var $translateengine;
 
 
+
 	function __construct() {
 			//初始化赋值
 			$this->dst = "en";
 			$this->src = "zh";
 			$this->err_msg = 0;
 			$this->translateengine = "baidu";
+			$this->autolink = 1;
 			//析构函数挂钩action
 			//rewrite
 			add_filter('rewrite_rules_array', array(&$this, 'update_rewrite_rules'));
 			add_filter('query_vars', array(&$this, 'parameter_queryvars'));
 
+
+
 			 // comment_moderation_text - future filter TODO
 			// full post wrapping (should happen late)
 			add_filter('the_content', array($this, 'post_content_wrap'),1,1);
-			add_filter('the_excerpt', array(&$this, 'post_content_wrap'),1,1);
-			add_filter('the_title', array($this, 'post_wrap'), 1, 2);
-			
+			add_filter('the_excerpt', array($this, 'post_content_wrap'),1,1);
+			add_filter('the_title', array($this, 'post_wrap'), 1, 2);		
 
 			//按语言替换连接
 			if(get_option('permalink_structure'))
@@ -102,13 +105,13 @@ class rongdede_translate{
 			}
 			else
 			{
-				add_filter('post_link', array($this, 'rongdede_link'));
+				//add_filter('post_link', array($this, 'rongdede_link'));
 				add_filter('author_feed_link', array($this, 'rongdede_link'));
 				add_filter('author_link', array($this, 'rongdede_link'));
 				add_filter('day_link', array($this, 'rongdede_link'));
 				add_filter('feed_link', array($this, 'rongdede_link'));
 				add_filter('month_link', array($this, 'rongdede_link'));
-				//add_filter('the_permalink', array($this, 'rongdede_link'));
+				add_filter('the_permalink', array($this, 'rongdede_link'));
 				add_filter('year_link', array($this, 'rongdede_link'));
 				add_filter('tag_link', array($this, 'rongdede_link'));
 				add_filter('term_link', array($this, 'rongdede_link'));
@@ -129,6 +132,14 @@ class rongdede_translate{
 
 
 		}
+
+
+
+
+	
+
+	
+
 
 	//写错误日志
 	function rlog($logs){
@@ -331,9 +342,7 @@ class rongdede_translate{
 				$baiduresult = $baiduresult.$baidujson->trans_result[$i]->dst."\n";
 			}
 		}
-
 		return $baiduresult;
-
 	}
 
 
@@ -402,11 +411,9 @@ class rongdede_translate{
 		else
 		{
 			return $row->content;
-			//return var_dump(wp_load_alloptions());
-			//return "3333";
+
 		}
-		//return "!111111";
-		//return get_option('permalink_structure');
+
     }
 
 	//根据语言显示相应语言的标题
@@ -444,5 +451,6 @@ $my_rongdede_translate = new rongdede_translate;
 
 require_once("widget.php");
 require_once("template.php");
+require_once("sitemap.php");
 
 
